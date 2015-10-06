@@ -1,0 +1,8 @@
+name: ItemCoder
+main: me.jaime29010.itemcoder.Main
+author: jaime29010
+version: 1.0
+commands:
+  itemcoder:
+    usage: The command for using ItemCoder features.
+    permission: itemcoder.usage
