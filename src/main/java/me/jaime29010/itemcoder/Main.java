@@ -13,6 +13,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -50,6 +51,11 @@ public class Main extends JavaPlugin {
                         "&3/itemcoder paste [NAME] &7- &cPaste the code to pastebin",
                         "&3/itemcoder reload &7- &cReloads the configuration of the plugin.",
                         "&3/itemcoder clear &7- &cDeletes all the generated code.",
+                        "&7Tools for ItemCoder:",
+                        "&3/itemcoder name [NAME] &7- &cSet the item of the item",
+                        "&3/itemcoder amount [AMOUNT] &7- &cSet the amount of the item",
+                        "&3/itemcoder lore [LINE] [TEXT] &7- &cSet the lore of the item",
+                        "&3/itemcoder durability [] &7- &cSet the durability of the item",
                         "&e=====================================================");
             } else {
                 switch (args[0].toLowerCase()) {
@@ -135,6 +141,60 @@ public class Main extends JavaPlugin {
                             }
                             Messager.sendf(sender, "&aSuccessfully deleted &7%s&a code snippets.", files.size());
                         } else Messager.send(sender, "&cThere are no code snippets to delete.");
+                        break;
+                    }
+
+                    case "name": {
+                        if(sender instanceof Player) {
+                            Player player = (Player) sender;
+                            if(args.length == 2) {
+                                String name = Messager.colorize(args[1]);
+                                ItemStack item = player.getItemInHand();
+                                ItemMeta meta = ((item.hasItemMeta()) ? item.getItemMeta() : getServer().getItemFactory().getItemMeta(item.getType()));
+                                meta.setDisplayName(name);
+                                item.setItemMeta(meta);
+                                Messager.sendr(sender, "&aSet the name to &6{name}", Replacer.add("{name}", name));
+                            } else Messager.send(sender, "&cYou have to provide an name");
+                        } else Messager.send(sender, "&cThis command can only be executed by a player.");
+                        break;
+                    }
+
+                    case "amount": {
+                        if(sender instanceof Player) {
+                            Player player = (Player) sender;
+                            if(args.length == 2) {
+                                try {
+                                    int amount = Integer.valueOf(args[1]);
+                                    ItemStack item = player.getItemInHand();
+                                    item.setAmount(amount);
+                                    Messager.sendr(sender, "&aSet the amount to &6{amount}", Replacer.add("{amount}", String.valueOf(amount)));
+                                } catch (Exception e) {
+                                    Messager.send(sender, "&cThe name has to be an integer");
+                                }
+                            } else Messager.send(sender, "&cYou have to provide an integer");
+                        } else Messager.send(sender, "&cThis command can only be executed by a player.");
+                        break;
+                    }
+
+                    case "durability": {
+                        if(sender instanceof Player) {
+                            Player player = (Player) sender;
+                            if(args.length == 2) {
+                                try {
+                                    short durability = Short.valueOf(args[1]);
+                                    ItemStack item = player.getItemInHand();
+                                    item.setDurability(durability);
+                                    Messager.sendr(sender, "&aSet the amount to &6{durability}", Replacer.add("{durability}", String.valueOf(durability)));
+                                } catch (Exception e) {
+                                    Messager.send(sender, "&cThe name has to be an short");
+                                }
+                            } else Messager.send(sender, "&cYou have to provide an short");
+                        } else Messager.send(sender, "&cThis command can only be executed by a player.");
+                        break;
+                    }
+
+                    case "lore": {
+                        Messager.send(sender, "&cThis feature is not implemented yet");
                         break;
                     }
                 }
