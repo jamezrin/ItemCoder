@@ -15,16 +15,6 @@ public class FilePaster {
         api = new PastebinAPI(apiKey);
     }
 
-    public static String paste(String name, File file) throws IOException, PastebinException {
-        CreatePaste paste = api.createPaste()
-                .withName(name)
-                .withFormat(Format.Java)
-                .withPrivacyLevel(PrivacyLevel.PUBLIC)
-                .withExpireDate(ExpireDate.ONE_HOUR)
-                .withFile(file);
-        return paste.post();
-    }
-
     public static String paste(String name, String text) throws IOException, PastebinException {
         CreatePaste paste = api.createPaste()
                 .withName(name)

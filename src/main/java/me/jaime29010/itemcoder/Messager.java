@@ -85,11 +85,16 @@ public final class Messager {
     public static final class Replacer {
         private final Map<String, String> replaces = new HashMap<>();
         public Replacer(String target, String replacement) {
-            replaces.put(target, replacement);
+            add(target, replacement);
         }
 
         public Replacer(Map<String, String> map) {
             replaces.putAll(map);
+        }
+
+        public Replacer add(String target, String replacement) {
+            replaces.put(target, replacement);
+            return this;
         }
 
         public Map<String, String> getReplaces() {
@@ -98,28 +103,17 @@ public final class Messager {
 
         public String replace(String string) {
             for(Map.Entry<String, String> entry : replaces.entrySet()) {
-                string = string.replace(entry.getKey(), entry.getValue());
+                string = string.replace(entry.getKey(), colorize(entry.getValue()));
             }
             return string;
         }
 
-        public static Replacer add(String target, String replacement) {
+        public static Replacer create(String target, String replacement) {
             return new Replacer(target, replacement);
         }
 
-        public static Replacer add(Map<String, String> map) {
+        public static Replacer create(Map<String, String> map) {
             return new Replacer(map);
         }
     }
-
-    /*
-    public static String format(String string, Object... objects) {
-        int replaces = 0;
-        while(string.contains("%s")) {
-            replaces++;
-            string = string.replaceFirst("%s", String.valueOf(objects[replaces]));
-        }
-        return string;
-    }
-     */
 }

@@ -2,10 +2,7 @@ package me.jaime29010.itemcoder.core;
 
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.FireworkEffect;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
@@ -127,7 +124,10 @@ public final class ItemCoder {
                         if (meta instanceof FireworkMeta) {
                             FireworkMeta fireworkMeta = (FireworkMeta) meta;
                             builder.addStatement("$T meta = ($T) item.getItemMeta()", FireworkMeta.class, FireworkMeta.class);
-                            builder.addStatement("meta.setPower($L)", fireworkMeta.getPower());
+                            if(fireworkMeta.getPower() != 1) {
+                                builder.addStatement("meta.setPower($L)", fireworkMeta.getPower());
+                            }
+
                             if (fireworkMeta.hasEffects()) {
                                 int effects = 1;
                                 for(FireworkEffect effect : fireworkMeta.getEffects()) {
