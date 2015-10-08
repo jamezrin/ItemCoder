@@ -1,14 +1,10 @@
 package me.jaime29010.itemcoder;
 
-import static com.squareup.javapoet.MethodSpec.Builder;
-
 import com.google.common.base.Joiner;
-import me.jaime29010.itemcoder.core.FilePaster;
+import me.jaime29010.itemcoder.Messager.Replacer;
 import me.jaime29010.itemcoder.core.ItemCoder;
 import me.jaime29010.itemcoder.core.ItemExporter;
-import me.jaime29010.itemcoder.Messager.Replacer;
 import me.jaime29010.itemcoder.core.ItemPaster;
-import me.nrubin29.pastebinapi.PastebinException;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -21,6 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.squareup.javapoet.MethodSpec.Builder;
+
 public class Main extends JavaPlugin {
     private Map<UUID, Builder> storage = new HashMap<>();
     private File snippets = null;
@@ -31,7 +29,8 @@ public class Main extends JavaPlugin {
             snippets.mkdirs();
             saveDefaultConfig();
         }
-        FilePaster.setAPIKey(getConfig().getString("pastebin_api_key"));
+
+        ItemPaster.setDeveloperKey(getConfig().getString("pastebin_api_key"));
         Prefixer.setPrefix("&7[&5Item&6Coder&7]&r");
     }
 
@@ -112,16 +111,14 @@ public class Main extends JavaPlugin {
                             if(storage.containsKey(player.getUniqueId())) {
                                 if(args.length == 2) {
                                     String name = args[1];
+                                    String link = null;
                                     try {
-                                        String link = ItemPaster.pasteCode(storage.remove(player.getUniqueId()), name);
-                                        Messager.send(sender, "&aSucessfully pasted the code in pastebin").sendr("&aLink: &6{link}", Replacer.create("{link}", link));
-                                    } catch (IOException e) {
-                                        Messager.send(sender, "&cAn error occurred when trying to export the code");
-                                        e.printStackTrace();
-                                    } catch (PastebinException e) {
-                                        Messager.send(sender, "&cAn error occurred when trying to paste the code");
+                                        link = ItemPaster.pasteCode(storage.remove(player.getUniqueId()), name);
+                                    } catch (Exception e) {
+                                        Messager.send(sender, "&cCould not paste your item");
                                         e.printStackTrace();
                                     }
+                                    Messager.send(sender, "&aSucessfully pasted the code in pastebin").sendr("&aLink: &6{link}", Replacer.create("{link}", link));
                                 } else Messager.send(sender, "&cYou have to provide a name for the file");
                             } else Messager.send(sender, "&cYou have to code an item first!");
                         } else Messager.send(sender, "&cThis command can only be executed by a player");
@@ -130,7 +127,7 @@ public class Main extends JavaPlugin {
 
                     case "reload": {
                         reloadConfig();
-                        FilePaster.setAPIKey(getConfig().getString("pastebin_api_key"));
+                        ItemPaster.setDeveloperKey(getConfig().getString("pastebin_api_key"));
                         Messager.send(sender, "&aThe configuration has been reloaded");
                         break;
                     }

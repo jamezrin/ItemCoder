@@ -2,7 +2,10 @@ package me.jaime29010.itemcoder.core;
 
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.DyeColor;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
@@ -22,6 +25,7 @@ public final class ItemCoder {
     public static Builder code(ItemStack item, Plugin plugin) {
         Builder builder = MethodSpec.methodBuilder("getItemStack");
         {
+            builder.addJavadoc("This method has been generated using ItemStackCoder" + "\nMore info at https://www.spigotmc.org/resources/itemstackcoder-item2java.13053/" + "\n");
             builder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
             builder.addStatement("$T item = new $T($T.$L)", ItemStack.class, ItemStack.class, Material.class, item.getType().name());
 
