@@ -1,5 +1,6 @@
 package me.jaime29010.itemcoder.core;
 
+import com.google.common.base.Joiner;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
 import org.bukkit.Color;
@@ -25,7 +26,7 @@ public final class ItemCoder {
     public static Builder code(ItemStack item, Plugin plugin) {
         Builder builder = MethodSpec.methodBuilder("getItemStack");
         {
-            builder.addJavadoc("This method has been generated using ItemStackCoder" + "\nMore info at https://www.spigotmc.org/resources/itemstackcoder-item2java.13053/" + "\n");
+            builder.addJavadoc(Joiner.on("\n").join("This method has been generated using ItemStackCoder", "More info at https://www.spigotmc.org/resources/itemstackcoder-item2java.13053/"));
             builder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
             builder.addStatement("$T item = new $T($T.$L)", ItemStack.class, ItemStack.class, Material.class, item.getType().name());
 

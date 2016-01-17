@@ -3,6 +3,7 @@ package me.jaime29010.itemcoder;
 import com.google.common.base.Joiner;
 import me.jaime29010.itemcoder.Messager.Replacer;
 import me.jaime29010.itemcoder.core.ItemCoder;
+import me.jaime29010.itemcoder.core.ItemDecoder;
 import me.jaime29010.itemcoder.core.ItemExporter;
 import me.jaime29010.itemcoder.core.ItemPaster;
 import org.bukkit.Material;
@@ -15,6 +16,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 import static com.squareup.javapoet.MethodSpec.Builder;
@@ -22,6 +26,8 @@ import static com.squareup.javapoet.MethodSpec.Builder;
 public class Main extends JavaPlugin {
     private Map<UUID, Builder> storage = new HashMap<>();
     private File snippets = null;
+    private ClassLoader loader = null;
+
     @Override
     public void onEnable() {
         snippets = new File(getDataFolder(), "snippets");
@@ -29,6 +35,20 @@ public class Main extends JavaPlugin {
             snippets.mkdirs();
             saveDefaultConfig();
         }
+
+        File compile = new File(snippets, "compile");
+        if(!compile.exists()) {
+            compile.mkdirs();
+        }
+
+        URL url = null;
+        try {
+            url = compile.toURI().toURL();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        URL[] urls = new URL[] {url};
+        loader = new URLClassLoader(urls);
 
         ItemPaster.setDeveloperKey(getConfig().getString("pastebin_api_key"));
         Prefixer.setPrefix("&7[&5Item&6Coder&7]&r");
@@ -42,12 +62,13 @@ public class Main extends JavaPlugin {
     @Override
     public boolean onCommand(final CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("itemcoder")) {
+            Messager msgr = new Messager(sender);
             if (args.length == 0) {
-                Messager.send(sender,
+                msgr.send(
                         "&e=====================================================",
                         "&7Commands for ItemCoder:",
                         "&3/.. code &7- &cTurns an item to code",
-                        "&3/.. decode &7- &cTurns code to an item",
+                        "&3/.. decode <name> &7- &cTurns code to an item [NIY]",
                         "&3/.. export <name> &7- &cExport the code to a file",
                         "&3/.. paste <name> &7- &cPaste the code at pastebin",
                         "&3/.. reload &7- &cReload config",
@@ -66,23 +87,34 @@ public class Main extends JavaPlugin {
                             Player player = (Player) sender;
                             ItemStack item = player.getItemInHand();
                             if(item.getType() != Material.AIR) {
-                                Messager.send(sender, "&aGenerating the code for the item in your hand...");
+                                msgr.send("&aGenerating the code for the item in your hand...");
                                 if(storage.containsKey(player.getUniqueId())) {
                                     storage.remove(player.getUniqueId());
-                                    Messager.send(sender, "&aDeleted the previously coded item");
+                                    msgr.send("&aDeleted the previously coded item");
                                 }
                                 storage.put(player.getUniqueId(), ItemCoder.code(item, this));
-                                Messager.send(sender, "&aThe code for the item has been generated, run &6/itemcoder export &ato save it");
-                            } else Messager.send(sender, "&cYou have to have a item in your hand.");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                msgr.send("&aThe code for the item has been generated, run &6/itemcoder export &ato save it");
+                            } else msgr.send("&cYou have to have a item in your hand.");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
                     case "decode": {
                         if(sender instanceof Player) {
                             Player player = (Player) sender;
-                            Messager.send(sender, "&cThis feature is not implemented yet!");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                            if(args.length == 2) {
+                                String name = args[1];
+                                File file = new File(getSnippetsFolder(), name + ".java");
+                                if(file.exists()) {
+                                    msgr.send("&aDecoding the code, this may take a while...");
+                                    ItemStack item = ItemDecoder.decode(name, file, this);
+                                    if(item != null) {
+                                        player.getInventory().addItem(item);
+                                        msgr.sendr("&aSucessfully decoded the file &6{name} &a, you should have it in your inventory", Replacer.create("{name}", name));
+                                    } else msgr.send("&cAn error occurred when decoding the item");
+                                } else msgr.sendr("&cThere is no file named {name} in the snippets folder", Replacer.create("{name}", name));
+                            } else msgr.send("&cYou have to provide a name for the file");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
@@ -95,13 +127,13 @@ public class Main extends JavaPlugin {
                                     try {
                                         ItemExporter.exportCode(storage.remove(player.getUniqueId()), name, this);
                                     } catch (IOException e) {
-                                        Messager.send(sender, "&cAn error occurred when trying to export the code");
+                                        msgr.send("&cAn error occurred when trying to export the code");
                                         e.printStackTrace();
                                     }
-                                    Messager.sendr(sender, "&aItem successfully exported as &6{name}", Replacer.create("{name}", name));
-                                } else Messager.send(sender, "&cYou have to provide a name for the file");
-                            } else Messager.send(sender, "&cYou have to code an item first!");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                    msgr.sendr("&aItem successfully exported as &6{name}", Replacer.create("{name}", name));
+                                } else msgr.send("&cYou have to provide a name for the file");
+                            } else msgr.send("&cYou have to code an item first!");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
@@ -115,20 +147,20 @@ public class Main extends JavaPlugin {
                                     try {
                                         link = ItemPaster.pasteCode(storage.remove(player.getUniqueId()), name);
                                     } catch (Exception e) {
-                                        Messager.send(sender, "&cCould not paste your item");
+                                        msgr.send("&cCould not paste your item");
                                         e.printStackTrace();
                                     }
-                                    Messager.send(sender, "&aSucessfully pasted the code in pastebin").sendr("&aLink: &6{link}", Replacer.create("{link}", link));
-                                } else Messager.send(sender, "&cYou have to provide a name for the file");
-                            } else Messager.send(sender, "&cYou have to code an item first!");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                    msgr.send("&aSucessfully pasted the code in pastebin").sendr("&aLink: &6{link}", Replacer.create("{link}", link));
+                                } else msgr.send("&cYou have to provide a name for the file");
+                            } else msgr.send("&cYou have to code an item first!");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
                     case "reload": {
                         reloadConfig();
                         ItemPaster.setDeveloperKey(getConfig().getString("pastebin_api_key"));
-                        Messager.send(sender, "&aThe configuration has been reloaded");
+                        msgr.send("&aThe configuration has been reloaded");
                         break;
                     }
 
@@ -137,9 +169,9 @@ public class Main extends JavaPlugin {
                             Player player = (Player) sender;
                             if(storage.containsKey(player.getUniqueId())) {
                                 storage.remove(player.getUniqueId());
-                                Messager.send(sender, "&aCleared your code clipboard");
-                            } else Messager.send(sender, "&cYou have not coded a item before!");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                msgr.send("&aCleared your code clipboard");
+                            } else msgr.send("&cYou have not coded a item before!");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
@@ -149,8 +181,8 @@ public class Main extends JavaPlugin {
                             for(File file : files) {
                                 file.delete();
                             }
-                            Messager.sendf(sender, "&aSuccessfully deleted &7%s&a code snippets", files.size());
-                        } else Messager.send(sender, "&cThere are no code snippets to delete");
+                            msgr.sendf("&aSuccessfully deleted &7%s&a code snippets", files.size());
+                        } else msgr.send("&cThere are no code snippets to delete");
                         break;
                     }
 
@@ -164,10 +196,10 @@ public class Main extends JavaPlugin {
                                     ItemMeta meta = ((item.hasItemMeta()) ? item.getItemMeta() : getServer().getItemFactory().getItemMeta(item.getType()));
                                     meta.setDisplayName(name);
                                     item.setItemMeta(meta);
-                                    Messager.sendr(sender, "&aSet the name to &7\"&f&o{name}&7\"", Replacer.create("{name}", name));
-                                } else Messager.send(sender, "&cYou have to provide an name");
-                            } else Messager.send(sender, "&cYou need to have a item in your hand");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                    msgr.sendr("&aSet the name to &7\"&f&o{name}&7\"", Replacer.create("{name}", name));
+                                } else msgr.send("&cYou have to provide an name");
+                            } else msgr.send("&cYou need to have a item in your hand");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
@@ -180,13 +212,13 @@ public class Main extends JavaPlugin {
                                     try {
                                         int amount = Integer.valueOf(args[1]);
                                         item.setAmount(amount);
-                                        Messager.sendr(sender, "&aSet the amount to &6\"&7{amount}&6\"", Replacer.create("{amount}", String.valueOf(amount)));
+                                        msgr.sendr("&aSet the amount to &6\"&7{amount}&6\"", Replacer.create("{amount}", String.valueOf(amount)));
                                     } catch (Exception e) {
-                                        Messager.send(sender, "&cThe amount has to be an integer");
+                                        msgr.send("&cThe amount has to be an integer");
                                     }
-                                } else Messager.send(sender, "&cYou have to provide an integer");
-                            } else Messager.send(sender, "&cYou need to have a item in your hand");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                } else msgr.send("&cYou have to provide an integer");
+                            } else msgr.send("&cYou need to have a item in your hand");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
@@ -199,52 +231,51 @@ public class Main extends JavaPlugin {
                                     try {
                                         short durability = Short.valueOf(args[1]);
                                         item.setDurability(durability);
-                                        Messager.sendr(sender, "&aSet the durability to &6\"&7{durability}&6\"", Replacer.create("{durability}", String.valueOf(durability)));
+                                        msgr.sendr("&aSet the durability to &6\"&7{durability}&6\"", Replacer.create("{durability}", String.valueOf(durability)));
                                     } catch (Exception e) {
-                                        Messager.send(sender, "&cThe durability has to be an short");
+                                        msgr.send("&cThe durability has to be an short");
                                     }
-                                } else Messager.send(sender, "&cYou have to provide an short");
-                            } else Messager.send(sender, "&cYou need to have a item in your hand");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                } else msgr.send("&cYou have to provide an short");
+                            } else msgr.send("&cYou need to have a item in your hand");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
 
                     case "lore": {
-                        Messager.send(sender, "&cThis feature is not implemented yet");
                         if(sender instanceof Player) {
                             Player player = (Player) sender;
                             ItemStack item = player.getItemInHand();
                             if(item.getType() != Material.AIR) {
                                 ItemMeta meta = ((item.hasItemMeta()) ? item.getItemMeta() : getServer().getItemFactory().getItemMeta(item.getType()));
-                                List<String> lore = meta.getLore();
-                                switch (args.length) {
-                                    case 2: {
-                                        lore.add(Messager.colorize(args[1]));
-                                        Messager.sendr(sender, "&aAdded the line &6\"&7{text}&6\" to the lore", Replacer.create("{text}", args[1]));
-                                        break;
-                                    }
-                                    case 3: {
-                                        try {
-                                            int index = Integer.valueOf(args[1]);
-                                            try {
-                                                lore.set(index, Messager.colorize(args[2]));
-                                                Messager.sendr(sender, "&aSet the line {line} to &6\"&7{text}&6\"", Replacer.create("{line}", String.valueOf(index)).add("{text}", args[2]));
-                                            } catch (Exception e) {
-                                                Messager.send(sender, "&cThe lore does not have that line");
-                                            }
-                                        } catch (Exception e) {
-                                            Messager.send(sender, "&cYou have to provide an number of the line you want to edit");
-                                        }
-                                        break;
-                                    }
-                                    default: Messager.send(sender, "&cYou have to provide an line of text");
-                                }
+                                List<String> lore = ((meta.hasLore()) ? meta.getLore() : new ArrayList<String>());
 
-                            } else Messager.send(sender, "&cYou need to have a item in your hand");
-                        } else Messager.send(sender, "&cThis command can only be executed by a player");
+                                if(args.length > 1) {
+                                    String arg1 = args[1];
+                                    try {
+                                        int line = Integer.valueOf(arg1);
+                                        try {
+                                            String text = Messager.colorize(Joiner.on(" ").join(Arrays.copyOfRange(args, 2, args.length)));
+                                            lore.set(line, text);
+                                            meta.setLore(lore);
+                                            item.setItemMeta(meta);
+                                            msgr.sendr("&aSet the line &6{line} &ato &6\"&7{text}&6\"", Replacer.create("{line}", String.valueOf(line)).add("{text}", text));
+                                        } catch (IndexOutOfBoundsException e) {
+                                            msgr.send("&cThe lore does not have that line");
+                                        }
+                                    } catch (NumberFormatException e) {
+                                        String text = Messager.colorize(Joiner.on(" ").join(Arrays.copyOfRange(args, 1, args.length)));
+                                        lore.add(text);
+                                        meta.setLore(lore);
+                                        item.setItemMeta(meta);
+                                        msgr.sendr("&aAdded the line &6\"&7{text}&6\" &ato the lore", Replacer.create("{text}", text));
+                                        break;
+                                    }
+                                } else msgr.send("&cYou have to provide an line of text");
+                            } else msgr.send("&cYou need to have a item in your hand");
+                        } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
-                    default: Messager.sendf(sender, "&cYou have used a bad argument, run &7/%s &cfor more info", cmd.getName());
+                    default: msgr.sendf("&cYou have used a bad argument, run &7/%s &cfor more info", cmd.getName());
                 }
             }
             return true;
@@ -254,5 +285,9 @@ public class Main extends JavaPlugin {
 
     public File getSnippetsFolder() {
         return snippets;
+    }
+
+    public ClassLoader getSnippetsLoader() {
+        return loader;
     }
 }
