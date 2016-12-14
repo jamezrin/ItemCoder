@@ -1,11 +1,11 @@
-package me.jaime29010.itemcoder;
+package me.jaimemartz.itemcoder;
 
 import com.google.common.base.Joiner;
-import me.jaime29010.itemcoder.Messager.Replacer;
-import me.jaime29010.itemcoder.core.ItemCoder;
-import me.jaime29010.itemcoder.core.ItemDecoder;
-import me.jaime29010.itemcoder.core.ItemExporter;
-import me.jaime29010.itemcoder.core.ItemPaster;
+import me.jaimemartz.faucet.Messager;
+import me.jaimemartz.itemcoder.core.ItemCoder;
+import me.jaimemartz.itemcoder.core.ItemDecoder;
+import me.jaimemartz.itemcoder.core.ItemExporter;
+import me.jaimemartz.itemcoder.core.ItemPaster;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -24,6 +24,12 @@ import java.util.*;
 import static com.squareup.javapoet.MethodSpec.Builder;
 
 public class Main extends JavaPlugin {
+    /*
+    TODO Add support for BlockStateMeta
+    TODO Add support for Repairable
+    TODO Add specific subcommands to items
+     */
+
     private Map<UUID, Builder> storage = new HashMap<>();
     private File snippets = null;
     private ClassLoader loader = null;
@@ -51,7 +57,7 @@ public class Main extends JavaPlugin {
         loader = new URLClassLoader(urls);
 
         ItemPaster.setDeveloperKey(getConfig().getString("pastebin_api_key"));
-        Prefixer.setPrefix("&7[&5Item&6Coder&7]&r");
+        //Prefix for the plugin is "&7[&5Item&6Coder&7]&r"
     }
 
     @Override
@@ -110,9 +116,9 @@ public class Main extends JavaPlugin {
                                     ItemStack item = ItemDecoder.decode(name, file, this);
                                     if(item != null) {
                                         player.getInventory().addItem(item);
-                                        msgr.sendr("&aSucessfully decoded the file &6{name} &a, you should have it in your inventory", Replacer.create("{name}", name));
+                                        msgr.send("&aSucessfully decoded the file &6{name} &a, you should have it in your inventory".replace("{name}", name));
                                     } else msgr.send("&cAn error occurred when decoding the item");
-                                } else msgr.sendr("&cThere is no file named {name} in the snippets folder", Replacer.create("{name}", name));
+                                } else msgr.send("&cThere is no file named {name} in the snippets folder".replace("{name}", name));
                             } else msgr.send("&cYou have to provide a name for the file");
                         } else msgr.send("&cThis command can only be executed by a player");
                         break;
@@ -130,7 +136,7 @@ public class Main extends JavaPlugin {
                                         msgr.send("&cAn error occurred when trying to export the code");
                                         e.printStackTrace();
                                     }
-                                    msgr.sendr("&aItem successfully exported as &6{name}", Replacer.create("{name}", name));
+                                    msgr.send("&aItem successfully exported as &6{name}".replace("{name}", name));
                                 } else msgr.send("&cYou have to provide a name for the file");
                             } else msgr.send("&cYou have to code an item first!");
                         } else msgr.send("&cThis command can only be executed by a player");
@@ -143,14 +149,14 @@ public class Main extends JavaPlugin {
                             if(storage.containsKey(player.getUniqueId())) {
                                 if(args.length == 2) {
                                     String name = args[1];
-                                    String link = null;
                                     try {
-                                        link = ItemPaster.pasteCode(storage.remove(player.getUniqueId()), name);
+                                        String link = ItemPaster.pasteCode(storage.remove(player.getUniqueId()), name);
+                                        msgr.send("&aSuccessfully pasted the code in pastebin");
+                                        msgr.send("&aLink: &6{link}".replace("{link}", link));
                                     } catch (Exception e) {
                                         msgr.send("&cCould not paste your item");
                                         e.printStackTrace();
                                     }
-                                    msgr.send("&aSucessfully pasted the code in pastebin").sendr("&aLink: &6{link}", Replacer.create("{link}", link));
                                 } else msgr.send("&cYou have to provide a name for the file");
                             } else msgr.send("&cYou have to code an item first!");
                         } else msgr.send("&cThis command can only be executed by a player");
@@ -181,7 +187,7 @@ public class Main extends JavaPlugin {
                             for(File file : files) {
                                 file.delete();
                             }
-                            msgr.sendf("&aSuccessfully deleted &7%s&a code snippets", files.size());
+                            msgr.send(String.format("&aSuccessfully deleted &7%s&a code snippets", files.size()));
                         } else msgr.send("&cThere are no code snippets to delete");
                         break;
                     }
@@ -196,7 +202,7 @@ public class Main extends JavaPlugin {
                                     ItemMeta meta = ((item.hasItemMeta()) ? item.getItemMeta() : getServer().getItemFactory().getItemMeta(item.getType()));
                                     meta.setDisplayName(name);
                                     item.setItemMeta(meta);
-                                    msgr.sendr("&aSet the name to &7\"&f&o{name}&7\"", Replacer.create("{name}", name));
+                                    msgr.send("&aSet the name to &7\"&f&o{name}&7\"".replace("{name}", name));
                                 } else msgr.send("&cYou have to provide an name");
                             } else msgr.send("&cYou need to have a item in your hand");
                         } else msgr.send("&cThis command can only be executed by a player");
@@ -212,7 +218,7 @@ public class Main extends JavaPlugin {
                                     try {
                                         int amount = Integer.valueOf(args[1]);
                                         item.setAmount(amount);
-                                        msgr.sendr("&aSet the amount to &6\"&7{amount}&6\"", Replacer.create("{amount}", String.valueOf(amount)));
+                                        msgr.send("&aSet the amount to &6\"&7{amount}&6\"".replace("{amount}", String.valueOf(amount)));
                                     } catch (Exception e) {
                                         msgr.send("&cThe amount has to be an integer");
                                     }
@@ -231,7 +237,7 @@ public class Main extends JavaPlugin {
                                     try {
                                         short durability = Short.valueOf(args[1]);
                                         item.setDurability(durability);
-                                        msgr.sendr("&aSet the durability to &6\"&7{durability}&6\"", Replacer.create("{durability}", String.valueOf(durability)));
+                                        msgr.send("&aSet the durability to &6\"&7{durability}&6\"".replace("{durability}", String.valueOf(durability)));
                                     } catch (Exception e) {
                                         msgr.send("&cThe durability has to be an short");
                                     }
@@ -258,7 +264,7 @@ public class Main extends JavaPlugin {
                                             lore.set(line, text);
                                             meta.setLore(lore);
                                             item.setItemMeta(meta);
-                                            msgr.sendr("&aSet the line &6{line} &ato &6\"&7{text}&6\"", Replacer.create("{line}", String.valueOf(line)).add("{text}", text));
+                                            msgr.send("&aSet the line &6{line} &ato &6\"&7{text}&6\"".replace("{line}", String.valueOf(line)).replace("{text}", text));
                                         } catch (IndexOutOfBoundsException e) {
                                             msgr.send("&cThe lore does not have that line");
                                         }
@@ -267,7 +273,7 @@ public class Main extends JavaPlugin {
                                         lore.add(text);
                                         meta.setLore(lore);
                                         item.setItemMeta(meta);
-                                        msgr.sendr("&aAdded the line &6\"&7{text}&6\" &ato the lore", Replacer.create("{text}", text));
+                                        msgr.send("&aAdded the line &6\"&7{text}&6\" &ato the lore".replace("{text}", text));
                                         break;
                                     }
                                 } else msgr.send("&cYou have to provide an line of text");
@@ -275,7 +281,7 @@ public class Main extends JavaPlugin {
                         } else msgr.send("&cThis command can only be executed by a player");
                         break;
                     }
-                    default: msgr.sendf("&cYou have used a bad argument, run &7/%s &cfor more info", cmd.getName());
+                    default: msgr.send(String.format("&cYou have used a bad argument, run &7/%s &cfor more info", cmd.getName()));
                 }
             }
             return true;

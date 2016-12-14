@@ -1,9 +1,9 @@
-package me.jaime29010.itemcoder.core;
+package me.jaimemartz.itemcoder.core;
 
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec.Builder;
 import com.squareup.javapoet.TypeSpec;
-import me.jaime29010.itemcoder.Main;
+import me.jaimemartz.itemcoder.Main;
 
 import javax.lang.model.element.Modifier;
 import java.io.IOException;

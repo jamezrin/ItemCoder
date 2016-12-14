@@ -1,4 +1,4 @@
-package me.jaime29010.itemcoder.core;
+package me.jaimemartz.itemcoder.core;
 
 import com.google.common.base.Joiner;
 import com.squareup.javapoet.MethodSpec;
@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
@@ -113,11 +114,11 @@ public final class ItemCoder {
                                 }
 
                                 for(Color color : effect.getColors()) {
-                                    builder.addStatement("effect.withColor($T.fromBGR($L))", Color.class, color.asBGR());
+                                    builder.addStatement("effect.withColor($T.fromRGB($L))", Color.class, color.asRGB());
                                 }
 
                                 for(Color color : effect.getFadeColors()) {
-                                    builder.addStatement("effect.withFade($T.fromBGR($L))", Color.class, color.asBGR());
+                                    builder.addStatement("effect.withFade($T.fromRGB($L))", Color.class, color.asRGB());
                                 }
                                 builder.addStatement("meta.setEffect(effect.build())", FireworkEffect.class);
                             }
@@ -149,11 +150,11 @@ public final class ItemCoder {
                                     }
 
                                     for(Color color : effect.getColors()) {
-                                        builder.addStatement("$L.withColor($T.fromBGR($L))", name, Color.class, color.asBGR());
+                                        builder.addStatement("$L.withColor($T.fromRGB($L))", name, Color.class, color.asRGB());
                                     }
 
                                     for(Color color : effect.getFadeColors()) {
-                                        builder.addStatement("$L.withFade($T.fromBGR($L))", name, Color.class, color.asBGR());
+                                        builder.addStatement("$L.withFade($T.fromRGB($L))", name, Color.class, color.asRGB());
                                     }
                                     builder.addStatement("meta.addEffect($L.build())", name);
                                     effects++;
@@ -171,7 +172,7 @@ public final class ItemCoder {
                             LeatherArmorMeta armorMeta = (LeatherArmorMeta) meta;
                             builder.addStatement("$T meta = ($T) item.getItemMeta()", LeatherArmorMeta.class, LeatherArmorMeta.class);
                             if (!armorMeta.getColor().equals(plugin.getServer().getItemFactory().getDefaultLeatherColor())) {
-                                builder.addStatement("meta.setColor($T.fromBGR($L))", Color.class, armorMeta.getColor().asBGR());
+                                builder.addStatement("meta.setColor($T.fromRGB($L))", Color.class, armorMeta.getColor().asRGB());
                             }
                         }
                         break;
@@ -211,6 +212,16 @@ public final class ItemCoder {
                         }
                         break;
                     }
+                    
+                    case MONSTER_EGGS:
+                    case MONSTER_EGG: {
+                        if (meta instanceof SpawnEggMeta) {
+                            SpawnEggMeta spawnEggMeta = (SpawnEggMeta) meta;
+                            builder.addStatement("$T meta = ($T) item.getItemMeta()", SpawnEggMeta.class, SpawnEggMeta.class);
+                            builder.addStatement("meta.setSpawnedType($T.$L)", EntityType.class, spawnEggMeta.getSpawnedType());
+                        }
+                        break;
+                    }
 
                     default: {
                         builder.addStatement("$T meta = item.getItemMeta()", ItemMeta.class);
@@ -238,6 +249,7 @@ public final class ItemCoder {
                     }
                     builder.addStatement("meta.setLore(lore)");
                 }
+
                 builder.addStatement("item.setItemMeta(meta)");
             }
 

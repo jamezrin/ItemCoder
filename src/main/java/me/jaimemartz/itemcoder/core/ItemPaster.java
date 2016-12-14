@@ -1,4 +1,4 @@
-package me.jaime29010.itemcoder.core;
+package me.jaimemartz.itemcoder.core;
 
 import com.google.common.base.Preconditions;
 import com.squareup.javapoet.JavaFile;
