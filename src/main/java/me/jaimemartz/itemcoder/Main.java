@@ -11,6 +11,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BannerMeta;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -70,22 +72,45 @@ public class Main extends JavaPlugin {
         if (cmd.getName().equalsIgnoreCase("itemcoder")) {
             Messager msgr = new Messager(sender);
             if (args.length == 0) {
-                msgr.send(
-                        "&e=====================================================",
-                        "&7Commands for ItemCoder:",
-                        "&3/.. code &7- &cTurns an item to code",
-                        "&3/.. decode <name> &7- &cTurns code to an item [NIY]",
-                        "&3/.. export <name> &7- &cExport the code to a file",
-                        "&3/.. paste <name> &7- &cPaste the code at pastebin",
-                        "&3/.. reload &7- &cReload config",
-                        "&3/.. clear &7- &cClear clipboard of code",
-                        "&3/.. purge &7- &cDelete the generated files",
-                        "&7Tools for ItemCoder:",
-                        "&3/.. name <name> &7- &cSet the item of the item",
-                        "&3/.. amount <amount> &7- &cSet the amount of the item",
-                        "&3/.. durability <amount> &7- &cSet the durability of the item",
-                        "&3/.. lore [line] <text> &7- &cSet the lore of the item",
-                        "&e=====================================================");
+                List<String> list = new LinkedList<>();
+                list.add("&e=====================================================");
+                list.add("&7Commands for ItemCoder:");
+                list.add("&3/.. code &7- &cTurns an item to code");
+                list.add("&3/.. decode <name> &7- &cTurns code to an item");
+                list.add("&3/.. paste <name> &7- &cPaste the code at pastebin");
+                list.add("&3/.. reload &7- &cReload config");
+                list.add("&3/.. clear &7- &cClear clipboard of code");
+                list.add("&3/.. purge &7- &cDelete the generated files");
+                if (sender instanceof Player) {
+                    list.add("&7Generic Item Tools:");
+                    list.add("&3/.. name <name> &7- &cSet the item of the item");
+                    list.add("&3/.. amount <amount> &7- &cSet the amount of the item");
+                    list.add("&3/.. durability <amount> &7- &cSet the durability of the item");
+                    list.add("&3/.. lore [line] <text> &7- &cSet the lore of the item");
+                    ItemStack item = ((Player) sender).getItemInHand();
+                    ItemMeta meta = item.getItemMeta();
+                    switch (item.getType()) {
+                        case BANNER: {
+                            if (meta instanceof BannerMeta) {
+                                list.add("&7Specific Banner Tools:");
+                                list.add("&3/.. basecolor [color] &7- &cGets or sets the base color of the banner");
+                                list.add("&3/.. addpattern <color> <type> &7- &cAdds a pattern with a specific color and type");
+                                list.add("&3/.. patterns <color> <type> &7- &cGives you a list of the current patterns");
+                                list.add("&3/.. removepattern <index> &7- &cRemoves the pattern at a specific index");
+                                break;
+                            }
+                        }
+
+                        case BOOK_AND_QUILL:
+                        case WRITTEN_BOOK: {
+                            if (meta instanceof BookMeta) {
+                                // FIXME: 15/12/2016
+                            }
+                        }
+                    }
+                }
+                list.add("&e=====================================================");
+                msgr.send(list.toArray(new String[list.size()]));
             } else {
                 switch (args[0].toLowerCase()) {
                     case "code": {

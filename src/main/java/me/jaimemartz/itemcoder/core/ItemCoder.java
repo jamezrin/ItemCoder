@@ -1,6 +1,5 @@
 package me.jaimemartz.itemcoder.core;
 
-import com.google.common.base.Joiner;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
 import org.bukkit.Color;
@@ -27,7 +26,7 @@ public final class ItemCoder {
     public static Builder code(ItemStack item, Plugin plugin) {
         Builder builder = MethodSpec.methodBuilder("getItemStack");
         {
-            builder.addJavadoc(Joiner.on("\n").join("This method has been generated using ItemStackCoder", "More info at https://www.spigotmc.org/resources/itemstackcoder-item2java.13053/"));
+            builder.addJavadoc("This method has been generated using ItemStackCoder\n" + "More info at https://www.spigotmc.org/resources/itemstackcoder-item2java.13053/");
             builder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
             builder.addStatement("$T item = new $T($T.$L)", ItemStack.class, ItemStack.class, Material.class, item.getType().name());
 
@@ -218,7 +217,11 @@ public final class ItemCoder {
                         if (meta instanceof SpawnEggMeta) {
                             SpawnEggMeta spawnEggMeta = (SpawnEggMeta) meta;
                             builder.addStatement("$T meta = ($T) item.getItemMeta()", SpawnEggMeta.class, SpawnEggMeta.class);
-                            builder.addStatement("meta.setSpawnedType($T.$L)", EntityType.class, spawnEggMeta.getSpawnedType());
+                            if (spawnEggMeta.getSpawnedType() != null) {
+                                builder.addStatement("meta.setSpawnedType($T.$L)", EntityType.class, spawnEggMeta.getSpawnedType());
+                            } else {
+                                builder.addStatement("meta.setSpawnedType(null)");
+                            }
                         }
                         break;
                     }

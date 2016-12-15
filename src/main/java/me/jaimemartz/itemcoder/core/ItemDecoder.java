@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 public final class ItemDecoder {
     public static ItemStack decode(String name, File input, Main main) {
         File output = new File(main.getSnippetsFolder(), "compile");
-        //Compile...
         BatchCompiler.compile(new String[] {
                 //The file to compile
                 input.getAbsolutePath(),
@@ -22,13 +21,12 @@ public final class ItemDecoder {
                 "-d", output.getAbsolutePath()
         }, new PrintWriter(System.out), new PrintWriter(System.err), null);
         try {
-            Class clazz = main.getSnippetsLoader().loadClass(name);
+            Class<?> clazz = main.getSnippetsLoader().loadClass(name);
             File file = new File(output, name + ".class");
             if(file.exists()) {
                 file.delete();
             }
-            ItemStack item = (ItemStack) clazz.getMethod("getItemStack").invoke(null, null);
-            return item;
+            return (ItemStack) clazz.getMethod("getItemStack").invoke(null);
         } catch (Exception e) {
             e.printStackTrace();
         }
